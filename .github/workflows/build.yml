@@ -1,0 +1,39 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v5
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Clean Build
+        run: ./gradlew clean build
+
+      - name: Set Commit ID
+        run: echo "commit_id=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Create Release and Upload JAR(s)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: release-${{ env.commit_id }}
+          name: EcoSkills-${{ env.commit_id }}
+          files: |
+            build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
